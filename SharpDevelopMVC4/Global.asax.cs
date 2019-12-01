@@ -12,6 +12,7 @@ using System.Web.Routing;
 using System.Web.SessionState;
 using Newtonsoft.Json.Serialization;
 using Hangfire.MemoryStorage;
+using System.Web.Security;
 
 namespace SharpDevelopMVC4
 {
@@ -49,21 +50,20 @@ namespace SharpDevelopMVC4
         protected void Application_End(object sender, EventArgs e)
         {
             _backgroundJobServer.Dispose();
-        }            
-
-        #region Session
-        // Avoid Session at all cost!!!
-        public override void Init()
-        {
-            this.PostAuthenticateRequest += MvcApplication_PostAuthenticateRequest;
-            base.Init();
         }
 
-        void MvcApplication_PostAuthenticateRequest(object sender, EventArgs e)
+        protected void Application_PostAuthenticateRequest(Object sender, EventArgs e)
         {
-			HttpContext.Current.SetSessionStateBehavior(SessionStateBehavior.Required);
+            var authCookie = HttpContext.Current.Request.Cookies[FormsAuthentication.FormsCookieName];
+            if (authCookie != null)
+            {
+                FormsAuthenticationTicket authTicket = FormsAuthentication.Decrypt(authCookie.Value);
+                if (authTicket != null && !authTicket.Expired)
+                {
+                    var roles = authTicket.UserData.Split(',');
+                    HttpContext.Current.User = new System.Security.Principal.GenericPrincipal(new FormsIdentity(authTicket), roles);
+                }
+            }
         }
-        #endregion
-        
     }
 }

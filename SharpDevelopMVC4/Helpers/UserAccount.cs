@@ -13,7 +13,6 @@ public partial class UserAccount
     // Change this to your DbContext class
     private static SdMvc4DbContext _db = new SdMvc4DbContext();
 
-
     #region UserAccountRepository
     public int Id { get; set; }
     //Login info
